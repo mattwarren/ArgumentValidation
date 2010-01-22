@@ -1,5 +1,4 @@
 ﻿
-
 namespace Validation.Exceptions
 {
     using System;
@@ -11,7 +10,6 @@ namespace Validation.Exceptions
             base()
         {
         }
-
 
         public ValidationException(string message)
             : base(message)

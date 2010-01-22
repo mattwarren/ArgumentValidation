@@ -39,6 +39,6 @@ namespace Validation
         public Validation()
         {
             exceptions = new List<Exception>(1); // optimize for only having 1 exception
-        }
+        }       
     }
 }

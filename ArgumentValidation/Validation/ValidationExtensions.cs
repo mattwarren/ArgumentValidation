@@ -12,23 +12,27 @@ namespace Validation
             where T : class
         {
             if (theObject == null)
-                return (validation ?? new Validation()).AddException(new ArgumentNullException(paramName));
+                return validation.AddExceptionEx(new ArgumentNullException(paramName));
             else
                 return validation;
         }
 
-        public static Validation IsPositive(this Validation validation, long value, string paramName)
-        {
-            if (value < 0)
-                return (validation ?? new Validation()).AddException(new ArgumentOutOfRangeException(paramName, "must be positive, but was " + value.ToString()));
-            else
-                return validation;
-        }
+        //Positive numbers are those greater than ZERO???
+        //Zero isn't POSITIVE or NEGATIVE see http://en.wikipedia.org/wiki/Negative_and_non-negative_numbers
+        //public static Validation IsPositive(this Validation validation, long value, string paramName)
+        //{
+        //    if (value < 0)
+        //        return validation.AddExceptionEx(new ArgumentOutOfRangeException(paramName,
+        //                                                                      "must be positive, but was " + value));
+        //    else
+        //        return validation;
+        //}
 
         public static Validation IsGreaterThanZero(this Validation validation, long value, string paramName)
         {
-            if (value <= 0)
-                return (validation ?? new Validation()).AddException(new ArgumentOutOfRangeException(paramName, "must be greater than zero, but was " + value.ToString()));
+            if (value <= 0)            
+                return validation.AddExceptionEx(new ArgumentOutOfRangeException(paramName,
+                                                                              "must be greater than zero, but was " + value));                            
             else
                 return validation;
         }
@@ -36,11 +40,11 @@ namespace Validation
         public static Validation IsIndexInRange<T>(this Validation validation, T[] array, long offset, string paramName)
         {
             if (offset < 0 || offset >= array.Length)
-            {
-                return (validation ?? new Validation()).AddException(
-                    new ArgumentOutOfRangeException(paramName,
-                                                    string.Format("must be > 0 and < {0}, but was {1}", array.Length,
-                                                                  offset)));
+            {               
+                return validation.AddExceptionEx(new ArgumentOutOfRangeException(paramName,
+                                                                                string.Format(
+                                                                                    "must be > 0 and < {0}, but was {1}",
+                                                                                    array.Length, offset)));
             }
             else
                 return validation;
@@ -59,29 +63,39 @@ namespace Validation
             }
             else
             {
-                // implementation shown below
+                // implementation is in MultiException.cs
                 throw new ValidationException(message, new MultiException(validation.Exceptions));
             }
         }
 
         public static Boolean AnyNull<T>(this IEnumerable<T> ie) where T : class
         {
-            foreach (var x in ie)
-                if (x == null) return true;
-            return false;
+            //foreach (var x in ie)
+            //    if (x == null) return true;
+            //return false;
+            return ie.Any(x => x == null);
         }
 
-        public static IEnumerable<string> GetAllExceptionMessages(this ValidationException exception)
+        public static IEnumerable<Exception> GetAllExceptions(this ValidationException exception)
         {
             if (exception.InnerException is MultiException)
             {
-                foreach (var except in (exception.InnerException as MultiException).InnerExceptions)
-                    yield return except.ToString();
+                var innerExceptions = (exception.InnerException as MultiException).InnerExceptions;
+                foreach (var innerException in innerExceptions)
+                    yield return innerException;
+                //Why can't we just do this???
+                //return (exception.InnerException as MultiException).InnerExceptions;                
             }
             else
             {
-                yield return exception.InnerException.ToString();
+                yield return exception.InnerException;
             }
+        }
+
+        //As per comment http://blog.getpaint.net/2008/12/06/a-fluent-approach-to-c-parameter-validation/#comment-5086
+        private static Validation AddExceptionEx(this Validation validation, Exception exception)
+        {
+            return (validation ?? new Validation()).AddException(exception);
         }
     }
 }
